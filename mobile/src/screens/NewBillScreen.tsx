@@ -19,6 +19,7 @@ export function NewBillScreen({
   onAddContacts,
   onPeopleCountChange,
   onPersonChange,
+  onMerchantChange,
   onContinue
 }: {
   merchant: string;
@@ -33,6 +34,7 @@ export function NewBillScreen({
   onAddContacts: () => void;
   onPeopleCountChange: (count: number) => void;
   onPersonChange: (personId: string, patch: Partial<Person>) => void;
+  onMerchantChange: (merchant: string) => void;
   onContinue: () => void;
 }) {
   const parsedTip = Number.parseFloat(tip.replace(',', '.')) || 0;
@@ -44,6 +46,18 @@ export function NewBillScreen({
       <View style={styles.headerCard}>
         <Text style={styles.screenTitle}>Set up split</Text>
         <Text style={styles.screenSub}>Receipt from {merchant} · {items.length} items · {money(itemsTotal)}</Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.label}>Restaurant name</Text>
+        <TextInput
+          value={merchant}
+          onChangeText={onMerchantChange}
+          placeholder="Enter restaurant name"
+          style={styles.restaurantInput}
+          placeholderTextColor={theme.color.muted}
+          autoCapitalize="words"
+        />
       </View>
 
       <View style={styles.card}>
@@ -144,6 +158,7 @@ const styles = StyleSheet.create({
   avatar: { width: 42, height: 42, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: '#FFFFFF', fontWeight: '900', fontSize: 17 },
   input: { flex: 1, backgroundColor: theme.color.background, borderWidth: 1, borderColor: theme.color.line, borderRadius: 16, paddingHorizontal: 12, height: 44, color: theme.color.text, fontWeight: '700' },
+  restaurantInput: { backgroundColor: theme.color.background, borderWidth: 1, borderColor: theme.color.line, borderRadius: 16, paddingHorizontal: 14, height: 52, color: theme.color.text, fontWeight: '700', marginBottom: 10 },
   nameInput: { flex: 0.75 },
   helper: { color: theme.color.muted, lineHeight: 20, fontSize: 13, marginTop: 4, fontWeight: '600' },
   miniReceipt: { borderWidth: 1, borderColor: theme.color.line, borderRadius: 18, padding: 12, backgroundColor: theme.color.background },

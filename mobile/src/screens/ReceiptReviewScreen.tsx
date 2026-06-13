@@ -23,7 +23,6 @@ export function ReceiptReviewScreen({
     warning?: string;
     rawText?: string;
     onMerchantChange: (merchant: string) => void;
-    onTipChange: (tip: string) => void;
     onCancel: () => void;
     onContinue: (items: ReceiptItem[], tip: string) => void;
 }) {
@@ -54,6 +53,7 @@ export function ReceiptReviewScreen({
                 <View style={styles.headerCard}>
                     <Text style={styles.title}>Review receipt</Text>
                     <Text style={styles.sub}>Edit the restaurant name, items, prices, and quantities before splitting.</Text>
+                    <Text style={styles.label}>Restaurant name</Text>
                     <TextInput
                         style={styles.merchantInput}
                         value={merchant}
@@ -113,7 +113,7 @@ export function ReceiptReviewScreen({
 
                 <View style={styles.totalsCard}>
                     <View style={styles.totalsRow}><Text style={styles.totalsLabel}>Items subtotal</Text><Text style={styles.totalsValue}>{money(itemsTotal)}</Text></View>
-                    <View style={styles.tipRow}><Text style={styles.totalsLabel}>Tip</Text><TextInput style={styles.tipInput} value={tip} onChangeText={onTipChange} keyboardType="decimal-pad" clearButtonMode="while-editing" returnKeyType="done" /></View>
+                    <View style={styles.totalsRow}><Text style={styles.totalsLabel}>Tip</Text><Text style={styles.totalsValue}>{money(parsedTip)}</Text></View>
                     <View style={styles.totalsRow}><Text style={styles.totalsLabel}>Grand total</Text><Text style={styles.totalsValue}>{money(itemsTotal + parsedTip)}</Text></View>
                 </View>
             </ScrollView>
@@ -132,6 +132,7 @@ const styles = StyleSheet.create({
     headerCard: { backgroundColor: theme.color.card, borderRadius: 16, padding: 14, ...theme.shadow },
     title: { fontSize: 20, fontWeight: '900', color: theme.color.text },
     sub: { marginTop: 6, color: theme.color.muted, fontWeight: '700' },
+    label: { marginTop: 16, color: theme.color.muted, fontSize: 13, fontWeight: '800' },
     listCard: { paddingTop: 8, gap: 10 },
     itemCard: { backgroundColor: theme.color.card, borderRadius: 14, padding: 10, marginBottom: 8, borderWidth: 1, borderColor: theme.color.line },
     itemRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },

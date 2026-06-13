@@ -11,9 +11,15 @@ export const personPalette = [
   '#14B8A6' // teal
 ];
 
+const personEmojis = ['🍕', '🍝', '🥗', '🍷', '🍰', '☕', '🍟', '🧋'];
+
+function getPersonEmoji(index: number) {
+  return personEmojis[(index - 1) % personEmojis.length];
+}
+
 export const initialPeople: Person[] = [
-  { id: 'p1', name: '', contact: '', contactType: 'none', color: personPalette[0], emoji: '1' },
-  { id: 'p2', name: '', contact: '', contactType: 'none', color: personPalette[1], emoji: '2' }
+  { id: 'p1', name: '', contact: '', contactType: 'none', color: personPalette[0], emoji: getPersonEmoji(1) },
+  { id: 'p2', name: '', contact: '', contactType: 'none', color: personPalette[1], emoji: getPersonEmoji(2) }
 ];
 
 export const demoReceipt: ReceiptParseResult = {
@@ -86,6 +92,6 @@ export function makeEmptyPerson(index: number): Person {
     contact: '',
     contactType: 'none',
     color,
-    emoji: `${index}`
+    emoji: getPersonEmoji(index)
   };
 }

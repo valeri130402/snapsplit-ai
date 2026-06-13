@@ -20,12 +20,12 @@ import { theme } from './src/theme';
 export default function App() {
   const STORAGE_KEY = 'snapsplit_history_v1';
   const [screen, setScreen] = useState<ScreenName>('home');
-  const [merchant, setMerchant] = useState(demoReceipt.merchant);
+  const [merchant, setMerchant] = useState('');
   const [people, setPeople] = useState<Person[]>(initialPeople);
-  const [items, setItems] = useState<ReceiptItem[]>(initialItems);
+  const [items, setItems] = useState<ReceiptItem[]>([]);
   const [tip, setTip] = useState('0.00');
   const [splitMode, setSplitMode] = useState<SplitMode>('manual');
-  const [selectedItemId, setSelectedItemId] = useState(initialItems[0]?.id ?? '');
+  const [selectedItemId, setSelectedItemId] = useState('');
   const [receiptWarning, setReceiptWarning] = useState<string | undefined>(undefined);
   const [receiptRawText, setReceiptRawText] = useState<string | undefined>(undefined);
   const [receiptImageUri, setReceiptImageUri] = useState<string | undefined>(undefined);
@@ -59,10 +59,6 @@ export default function App() {
   }
 
   function navigate(nextScreen: ScreenName) {
-    if (nextScreen === 'importReceipt') {
-      startSplitBill();
-      return;
-    }
     setScreen(nextScreen);
   }
 
@@ -85,7 +81,15 @@ export default function App() {
   }
 
   function startSplitBill() {
-    resetReceiptToDemo();
+    setMerchant('');
+    setPeople(initialPeople);
+    setItems([]);
+    setSelectedItemId('');
+    setTip('0.00');
+    setSplitMode('manual');
+    setReceiptWarning(undefined);
+    setReceiptRawText(undefined);
+    setReceiptImageUri(undefined);
     setScreen('importReceipt');
   }
 
@@ -292,6 +296,15 @@ export default function App() {
     });
   }
 
+  function deleteHistoryBill(billId: string) {
+    setHistory((current) => {
+      const next = current.filter((entry) => entry.id !== billId);
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch(() => { });
+      return next;
+    });
+    setSelectedHistoryBill((current) => (current?.id === billId ? null : current));
+  }
+
   useEffect(() => {
     (async () => {
       try {
@@ -335,7 +348,7 @@ export default function App() {
 
   function renderScreen() {
     if (screen === 'home') {
-      return <HomeScreen history={history} onSplitBill={startSplitBill} onOpenBill={openHistoryBill} />;
+      return <HomeScreen history={history} onSplitBill={startSplitBill} onOpenBill={openHistoryBill} onDeleteBill={deleteHistoryBill} />;
     }
 
     if (screen === 'history') return <HistoryScreen history={history} onOpenBill={openHistoryBill} />;
@@ -351,6 +364,7 @@ export default function App() {
           merchant={merchant}
           items={items}
           total={itemsTotal}
+          receiptImageUri={receiptImageUri}
           onTakePhoto={takeReceiptPhoto}
           onUpload={uploadReceipt}
           onUseDemo={resetReceiptToDemo}
@@ -374,6 +388,7 @@ export default function App() {
           onAddContacts={addContactFromPhone}
           onPeopleCountChange={updatePeopleCount}
           onPersonChange={updatePerson}
+          onMerchantChange={setMerchant}
           onContinue={continueFromSetup}
         />
       );
@@ -388,7 +403,6 @@ export default function App() {
           warning={receiptWarning}
           rawText={receiptRawText}
           onMerchantChange={setMerchant}
-          onTipChange={setTip}
           onCancel={() => setScreen('importReceipt')}
           onContinue={(nextItems, nextTip) => {
             setItems(nextItems);

@@ -297,3 +297,4 @@ const styles = StyleSheet.create({
   legendDot: { width: 10, height: 10, borderRadius: 5 },
   legendName: { color: theme.color.text, fontSize: 12, fontWeight: '800' },
   footer: { color: theme.color.muted, fontWeight: '600', textAlign: 'center', lineHeight: 19 }
+});

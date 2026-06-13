@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BillHistoryEntry } from '../types';
 import { theme } from '../theme';
@@ -8,13 +8,22 @@ import { money } from '../logic/splitEngine';
 export function HomeScreen({
   history,
   onSplitBill,
-  onOpenBill
+  onOpenBill,
+  onDeleteBill
 }: {
   history: BillHistoryEntry[];
   onSplitBill: () => void;
   onOpenBill: (bill: BillHistoryEntry) => void;
+  onDeleteBill: (billId: string) => void;
 }) {
   const monthTotal = history.reduce((sum, bill) => sum + bill.amount, 0);
+
+  function confirmDelete(billId: string) {
+    Alert.alert('Delete bill?', 'Do you want to delete this bill from history?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => onDeleteBill(billId) }
+    ]);
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
@@ -50,7 +59,12 @@ export function HomeScreen({
 
       <View style={styles.listCard}>
         {history.map((bill, index) => (
-          <Pressable key={bill.id} onPress={() => onOpenBill(bill)} style={[styles.billRow, index !== history.length - 1 && styles.billBorder]}>
+          <Pressable
+            key={bill.id}
+            onPress={() => onOpenBill(bill)}
+            onLongPress={() => confirmDelete(bill.id)}
+            style={[styles.billRow, index !== history.length - 1 && styles.billBorder]}
+          >
             <View style={styles.billIcon}>
               <Ionicons name={index === 0 ? 'restaurant-outline' : index === 1 ? 'cafe-outline' : 'location-outline'} size={22} color="#FFFFFF" />
             </View>
