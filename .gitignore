@@ -1,0 +1,24 @@
+# dependencies
+node_modules/
+mobile/node_modules/
+api/node_modules/
+
+# Expo
+.expo/
+mobile/.expo/
+dist/
+build/
+
+# secrets
+.env
+.env.local
+api/.env
+mobile/.env
+
+# logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db

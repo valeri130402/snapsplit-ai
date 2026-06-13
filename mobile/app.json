@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "SnapSplit",
+    "slug": "snapsplit-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#F7F9FF"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "SnapSplit needs photo access so you can select a receipt image.",
+        "NSCameraUsageDescription": "SnapSplit needs camera access so you can take a receipt photo."
+      }
+    },
+    "android": {
+      "package": "com.snapsplit.mobile"
+    }
+  }
+}
