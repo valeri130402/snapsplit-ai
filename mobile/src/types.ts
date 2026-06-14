@@ -25,6 +25,10 @@ export type ReceiptParseResult = {
   merchant: string;
   currency: string;
   items: Omit<ReceiptItem, 'assignedTo'>[];
+  tax: number;
+  subtotal?: number;
+  total?: number;
+  tip?: number;
   rawText?: string;
   warning?: string;
 };
@@ -38,6 +42,8 @@ export type SplitResult = {
   emoji?: string;
   items: ReceiptItem[];
   itemSubtotal: number;
+  taxShare: number;
+  tipShare: number;
   extras: number;
   total: number;
   kcal: number;
@@ -50,6 +56,7 @@ export type BillHistoryEntry = {
   amount: number;
   people: string[];
   tip?: number;
+  tax: number;
   results?: SplitResult[];
   receiptItems?: ReceiptItem[];
   receiptImageUri?: string;

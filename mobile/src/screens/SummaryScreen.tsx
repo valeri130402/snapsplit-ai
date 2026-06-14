@@ -20,7 +20,9 @@ export function SummaryScreen({
   grandTotal: number;
   onDone: () => void;
 }) {
-  const message = buildShareMessage(merchant, results, grandTotal);
+  const totalTax = results.reduce((sum, result) => sum + result.taxShare, 0);
+  const totalTip = results.reduce((sum, result) => sum + result.tipShare, 0);
+  const message = buildShareMessage(merchant, results, grandTotal, totalTip, totalTax);
   const receiptRef = useRef<View | null>(null);
 
   async function savePrettyReceiptImage() {
@@ -111,10 +113,16 @@ export function SummaryScreen({
                   </View>
                 ))
               )}
-              {result.extras > 0 ? (
+              {result.taxShare > 0 ? (
+                <View style={styles.itemLineRow}>
+                  <Text style={styles.itemLine}>• Tax share</Text>
+                  <Text style={styles.itemLinePrice}>{money(result.taxShare)}</Text>
+                </View>
+              ) : null}
+              {result.tipShare > 0 ? (
                 <View style={styles.itemLineRow}>
                   <Text style={styles.itemLine}>• Tip share</Text>
-                  <Text style={styles.itemLinePrice}>{money(result.extras)}</Text>
+                  <Text style={styles.itemLinePrice}>{money(result.tipShare)}</Text>
                 </View>
               ) : null}
             </View>
@@ -138,12 +146,12 @@ export function SummaryScreen({
   );
 }
 
-function buildShareMessage(merchant: string, results: SplitResult[], grandTotal: number) {
+function buildShareMessage(merchant: string, results: SplitResult[], grandTotal: number, totalTip: number, totalTax: number) {
   const lines = results.map((result) => {
     const itemList = result.items.map((item) => `${item.name}${item.assignedTo.length > 1 ? ` /${item.assignedTo.length}` : ''}`).join(', ') || 'no items';
     return `${result.name}: ${money(result.total)} — ${itemList}`;
   });
-  return `SnapSplit receipt for ${merchant}\nTotal: ${money(grandTotal)}\n\n${lines.join('\n')}\n\nSplit the bill, not the friendship.`;
+  return `SnapSplit receipt for ${merchant}\nTotal: ${money(grandTotal)}\nTax: ${money(totalTax)}\nTip: ${money(totalTip)}\n\n${lines.join('\n')}\n\nSplit the bill, not the friendship.`;
 }
 
 const styles = StyleSheet.create({

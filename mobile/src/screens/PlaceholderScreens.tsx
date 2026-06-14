@@ -23,6 +23,7 @@ export function HistoryScreen({ history, onOpenBill }: { history: BillHistoryEnt
               <Text style={styles.cardTitle}>{bill.merchant}</Text>
               <Text style={styles.cardSub}>{bill.date} · {bill.people.length} people</Text>
               <Text style={styles.cardSub}>with {bill.people.join(', ')}</Text>
+              <Text style={styles.cardSub}>Tax {money(bill.tax ?? 0)} · Tip {money(bill.tip ?? 0)}</Text>
             </View>
             <View style={styles.amountBlock}>
               <Text style={styles.amount}>{money(bill.amount)}</Text>
@@ -154,6 +155,10 @@ export function BillDetailScreen({ bill, onBack }: { bill: BillHistoryEntry; onB
         <View style={styles.receiptTotalsRow}>
           <Text style={styles.receiptTotalsLabel}>Items subtotal</Text>
           <Text style={styles.receiptTotalsValue}>{money((bill.receiptItems ?? []).reduce((s, i) => s + i.price, 0))}</Text>
+        </View>
+        <View style={styles.receiptTotalsRow}>
+          <Text style={styles.receiptTotalsLabel}>Tax</Text>
+          <Text style={styles.receiptTotalsValue}>{money(bill.tax ?? 0)}</Text>
         </View>
         <View style={styles.receiptTotalsRow}>
           <Text style={styles.receiptTotalsLabel}>Tip</Text>

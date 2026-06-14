@@ -93,7 +93,13 @@ function normalizeReceiptResponse(result) {
 
     const items = parseReceiptItemsFromFields(fields?.Items);
     const subtotal = parseNumberField(fields?.Subtotal);
-    const tax = parseNumberField(fields?.Tax);
+    // Try multiple possible Azure field names for tax; do not compute tax from subtotal/total
+    const tax = parseNumberField(fields?.TotalTax)
+        ?? parseNumberField(fields?.Tax)
+        ?? parseNumberField(fields?.TaxAmount)
+        ?? parseNumberField(fields?.TaxDetails)
+        ?? parseNumberField(fields?.VAT)
+        ?? undefined;
     const tip = parseNumberField(fields?.Tip)
         ?? parseNumberField(fields?.TipAmount)
         ?? parseNumberField(fields?.Gratuity)
@@ -140,6 +146,41 @@ function extractItemsFromRawOcr(rawText) {
         acc.push({ name: name || 'Item', price: amount, quantity: 1 });
         return acc;
     }, []);
+}
+
+function findAmountAfterLabel(content, labels) {
+    if (!content || !labels || !labels.length) return undefined;
+    const lines = String(content)
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+
+    const amountPattern = /([0-9]+(?:[.,][0-9]{2})?)/;
+
+    for (let i = 0; i < lines.length; i += 1) {
+        const line = lines[i];
+        const lower = line.toLowerCase();
+        // check if the label appears in this line
+        if (labels.some((lab) => lower === lab || lower.includes(lab + ' ') || lower.includes(' ' + lab) || lower.includes(lab + ':') || lower.startsWith(lab))) {
+            // try to find amount on same line
+            const sameMatch = line.match(amountPattern);
+            if (sameMatch) return Number(String(sameMatch[1]).replace(',', '.'));
+            // otherwise check next up to two lines for an amount
+            for (let j = 1; j <= 2 && i + j < lines.length; j += 1) {
+                const nextMatch = lines[i + j].match(amountPattern);
+                if (nextMatch) return Number(String(nextMatch[1]).replace(',', '.'));
+            }
+        }
+        // also support lines like: "tax" on line, and amount on previous line (some receipts)
+        if (labels.some((lab) => lower === lab)) {
+            if (i > 0) {
+                const prevMatch = lines[i - 1].match(amountPattern);
+                if (prevMatch) return Number(String(prevMatch[1]).replace(',', '.'));
+            }
+        }
+    }
+
+    return undefined;
 }
 
 async function pollAzureOperation(operationLocation, headers) {
@@ -238,10 +279,28 @@ app.post('/api/parse-receipt', upload.single('receipt'), async (req, res) => {
         console.log('Azure analyzeResult keys:', analyzeResultKeys);
         console.log('Azure documents count:', documentCount);
         console.log('Azure document field keys:', fieldKeys);
+        // Log the actual fields object and common tax-related raw fields for debugging
+        const fieldsObj = (Array.isArray(analyzeResult.documents) && analyzeResult.documents[0]?.fields) ? analyzeResult.documents[0].fields : {};
+        console.log('Azure field keys:', Object.keys(fieldsObj));
+        console.log('Raw TotalTax:', fieldsObj.TotalTax);
+        console.log('Raw Tax:', fieldsObj.Tax);
         console.log('Azure raw OCR content preview:', String(analyzeResult.content || rawText).slice(0, 1000));
 
         let normalized = normalizeReceiptResponse(operationResult);
         console.log('Normalized receipt items count:', normalized.items.length);
+        // Log detected subtotal, tax and total for debugging and traceability
+        console.log('detected subtotal:', normalized.subtotal ?? 0);
+        console.log('detected tax:', normalized.tax ?? 0);
+        console.log('detected total:', normalized.total ?? 0);
+        console.log('final normalized response:', JSON.stringify({
+            restaurantName: normalized.restaurantName || '',
+            date: normalized.date || '',
+            items: normalized.items || [],
+            subtotal: normalized.subtotal ?? 0,
+            tax: normalized.tax ?? 0,
+            tip: normalized.tip ?? 0,
+            total: normalized.total ?? 0
+        }));
 
         let items = normalized.items || [];
         if (!items.length) {

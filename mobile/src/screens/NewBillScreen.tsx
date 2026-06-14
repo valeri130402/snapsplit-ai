@@ -11,6 +11,7 @@ export function NewBillScreen({
   people,
   items,
   tip,
+  tax,
   splitMode,
   onSplitModeChange,
   onTipChange,
@@ -26,6 +27,7 @@ export function NewBillScreen({
   people: Person[];
   items: ReceiptItem[];
   tip: string;
+  tax: string;
   splitMode: SplitMode;
   onSplitModeChange: (mode: SplitMode) => void;
   onTipChange: (tip: string) => void;
@@ -38,8 +40,9 @@ export function NewBillScreen({
   onContinue: () => void;
 }) {
   const parsedTip = Number.parseFloat(tip.replace(',', '.')) || 0;
+  const parsedTax = Number.parseFloat(tax.replace(',', '.')) || 0;
   const itemsTotal = getItemsTotal(items);
-  const grandTotal = itemsTotal + parsedTip;
+  const grandTotal = itemsTotal + parsedTip + parsedTax;
 
   return (
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
@@ -117,6 +120,12 @@ export function NewBillScreen({
       </View>
 
       <View style={styles.card}>
+        <Text style={styles.label}>Tax</Text>
+        <Text style={styles.taxDetail}>{money(parsedTax)}</Text>
+        <Text style={styles.helper}>Tax is added automatically based on the scanned receipt and split proportionally.</Text>
+      </View>
+
+      <View style={styles.card}>
         <Text style={styles.label}>How do you want to split?</Text>
         <View style={styles.modeRow}>
           <Pressable onPress={() => onSplitModeChange('manual')} style={[styles.modeCard, splitMode === 'manual' && styles.modeCardActive]}>
@@ -133,7 +142,7 @@ export function NewBillScreen({
       </View>
 
       <View style={styles.grandTotalBox}>
-        <Text style={styles.grandTotalLabel}>Total with tip</Text>
+        <Text style={styles.grandTotalLabel}>Total with tax and tip</Text>
         <Text style={styles.grandTotalValue}>{money(grandTotal)}</Text>
       </View>
       <AppButton title={splitMode === 'equal' ? 'Calculate Equal Split' : 'Continue to Assign Items'} icon="arrow-forward-outline" onPress={onContinue} />
@@ -174,6 +183,7 @@ const styles = StyleSheet.create({
   tipPresetLight: { backgroundColor: theme.color.blueSoft, borderRadius: 16, paddingHorizontal: 14, height: 42, alignItems: 'center', justifyContent: 'center' },
   tipPresetLightText: { color: theme.color.blue, fontWeight: '900' },
   tipInput: { height: 52, borderRadius: 18, borderWidth: 1.5, borderColor: theme.color.line, textAlign: 'center', fontSize: 22, fontWeight: '900', color: theme.color.text, backgroundColor: theme.color.background },
+  taxDetail: { fontSize: 22, fontWeight: '900', color: theme.color.text, marginBottom: 8 },
   modeRow: { flexDirection: 'row', gap: 12 },
   modeCard: { flex: 1, borderWidth: 1.5, borderColor: theme.color.line, borderRadius: 20, padding: 14, backgroundColor: theme.color.background },
   modeCardActive: { backgroundColor: theme.color.blue, borderColor: theme.color.blue },

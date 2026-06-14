@@ -43,6 +43,10 @@ export async function parseReceiptImage(asset: ImagePickerAsset): Promise<Receip
       merchant: json.restaurantName || json.merchant || demoReceipt.merchant,
       currency: json.currency || 'EUR',
       items: (json.items || []).map((it: any, idx: number) => ({ id: it.id ?? `ai-${idx}`, name: it.name ?? `Item ${idx + 1}`, price: Number(it.price ?? 0), quantity: Number(it.quantity ?? 1), kcal: it.kcal })),
+      subtotal: Number(json.subtotal ?? 0),
+      tax: Number(json.tax ?? 0),
+      total: Number(json.total ?? 0),
+      tip: Number(json.tip ?? 0),
       rawText: json.rawText,
       warning: json.warning
     };

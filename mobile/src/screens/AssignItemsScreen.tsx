@@ -13,6 +13,7 @@ export function AssignItemsScreen({
   selectedItemId,
   results,
   tip,
+  tax,
   onSelectedItemChange,
   onTogglePerson,
   onAssignEveryone,
@@ -27,6 +28,7 @@ export function AssignItemsScreen({
   selectedItemId: string;
   results: SplitResult[];
   tip: string;
+  tax: string;
   onSelectedItemChange: (itemId: string) => void;
   onTogglePerson: (personId: string) => void;
   onAssignEveryone: () => void;
@@ -78,6 +80,8 @@ export function AssignItemsScreen({
     return personNames.join(', ');
   }
 
+  const parsedTax = Number.parseFloat(tax.replace(',', '.')) || 0;
+
   return (
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.topCard}>
@@ -87,6 +91,14 @@ export function AssignItemsScreen({
           <View style={[styles.progressFill, { width: `${items.length ? (assignedCount / items.length) * 100 : 0}%` }]} />
         </View>
         <Text style={styles.progressText}>{assignedCount} of {items.length} items assigned</Text>
+        <View style={styles.receiptSummaryRow}>
+          <Text style={styles.receiptSummaryLabel}>Tip</Text>
+          <Text style={styles.receiptSummaryValue}>{money(Number.parseFloat(tip.replace(',', '.')) || 0)}</Text>
+        </View>
+        <View style={styles.receiptSummaryRow}>
+          <Text style={styles.receiptSummaryLabel}>Tax</Text>
+          <Text style={styles.receiptSummaryValue}>{money(parsedTax)}</Text>
+        </View>
       </View>
 
       <View style={styles.peopleGrid}>
@@ -276,6 +288,9 @@ const styles = StyleSheet.create({
   receiptHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 8 },
   receiptTitle: { color: theme.color.text, fontSize: 18, fontWeight: '900' },
   receiptTip: { color: theme.color.muted, fontSize: 12, fontWeight: '800' },
+  receiptSummaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10, alignItems: 'center' },
+  receiptSummaryLabel: { color: theme.color.muted, fontWeight: '900' },
+  receiptSummaryValue: { color: theme.color.text, fontWeight: '900' },
   receiptRow: { minHeight: 66, borderRadius: 18, padding: 10, marginBottom: 6, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: theme.color.line, overflow: 'hidden', backgroundColor: theme.color.card },
   receiptRowSelected: { borderColor: theme.color.blue, borderWidth: 2 },
   transparentOwnerBand: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, flexDirection: 'row' },

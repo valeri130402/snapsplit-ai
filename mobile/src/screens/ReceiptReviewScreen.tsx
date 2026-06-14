@@ -3,17 +3,27 @@ import { ScrollView, StyleSheet, Text, TextInput, View, Pressable, Alert, Keyboa
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../components/AppButton';
 import { ReceiptItem } from '../types';
-import { money, getItemsTotal } from '../logic/splitEngine';
+import { money } from '../logic/splitEngine';
 import { theme } from '../theme';
+
+interface EditableReceiptItem extends ReceiptItem {
+    priceText: string;
+}
+
+function parseCurrencyValue(value: string) {
+    return Number.parseFloat(value.replace(',', '.')) || 0;
+}
 
 export function ReceiptReviewScreen({
     merchant,
     items: initialItems,
     tip,
+    tax,
     warning,
     rawText,
     onMerchantChange,
     onTipChange,
+    onTaxChange,
     onCancel,
     onContinue
 }: {
@@ -23,12 +33,20 @@ export function ReceiptReviewScreen({
     warning?: string;
     rawText?: string;
     onMerchantChange: (merchant: string) => void;
+    onTipChange: (tip: string) => void;
+    onTaxChange: (tax: string) => void;
     onCancel: () => void;
-    onContinue: (items: ReceiptItem[], tip: string) => void;
+    onContinue: (items: ReceiptItem[], tip: string, tax: string) => void;
 }) {
-    const [items, setItems] = useState<ReceiptItem[]>(initialItems.map((i) => ({ ...i, quantity: i.quantity ?? 1 })));
+    const [items, setItems] = useState<EditableReceiptItem[]>(
+        initialItems.map((i) => ({
+            ...i,
+            quantity: i.quantity ?? 1,
+            priceText: i.price.toFixed(2)
+        }))
+    );
 
-    function updateItem(id: string, patch: Partial<ReceiptItem>) {
+    function updateItem(id: string, patch: Partial<EditableReceiptItem>) {
         setItems((cur) => cur.map((it) => (it.id === id ? { ...it, ...patch } : it)));
     }
 
@@ -41,11 +59,20 @@ export function ReceiptReviewScreen({
 
     function addItem() {
         const id = `new-${Date.now()}`;
-        setItems((cur) => [...cur, { id, name: 'New item', price: 0, quantity: 1, assignedTo: [] }]);
+        setItems((cur) => [...cur, { id, name: 'New item', price: 0, quantity: 1, assignedTo: [], priceText: '0.00' }]);
     }
 
-    const itemsTotal = getItemsTotal(items);
+    const itemsTotal = items.reduce((sum, item) => sum + parseCurrencyValue(item.priceText), 0);
     const parsedTip = Number.parseFloat(tip.replace(',', '.')) || 0;
+    const parsedTax = Number.parseFloat(tax.replace(',', '.')) || 0;
+
+    function buildReceiptItems() {
+        return items.map(({ priceText, ...item }) => ({
+            ...item,
+            price: parseCurrencyValue(priceText),
+            quantity: Math.max(1, item.quantity ?? 1)
+        }));
+    }
 
     return (
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.screen}>
@@ -93,9 +120,9 @@ export function ReceiptReviewScreen({
                                 </View>
                                 <TextInput
                                     style={styles.priceInput}
-                                    value={item.price.toFixed(2)}
+                                    value={item.priceText}
                                     keyboardType="decimal-pad"
-                                    onChangeText={(t) => updateItem(item.id, { price: Number.parseFloat(t.replace(',', '.') || '0') })}
+                                    onChangeText={(t) => updateItem(item.id, { priceText: t })}
                                     clearButtonMode="while-editing"
                                     returnKeyType="done"
                                 />
@@ -113,13 +140,24 @@ export function ReceiptReviewScreen({
 
                 <View style={styles.totalsCard}>
                     <View style={styles.totalsRow}><Text style={styles.totalsLabel}>Items subtotal</Text><Text style={styles.totalsValue}>{money(itemsTotal)}</Text></View>
+                    <View style={styles.totalsRow}>
+                        <Text style={styles.totalsLabel}>Tax</Text>
+                        <TextInput
+                            style={styles.taxInput}
+                            value={tax}
+                            keyboardType="decimal-pad"
+                            onChangeText={onTaxChange}
+                            clearButtonMode="while-editing"
+                            returnKeyType="done"
+                        />
+                    </View>
                     <View style={styles.totalsRow}><Text style={styles.totalsLabel}>Tip</Text><Text style={styles.totalsValue}>{money(parsedTip)}</Text></View>
-                    <View style={styles.totalsRow}><Text style={styles.totalsLabel}>Grand total</Text><Text style={styles.totalsValue}>{money(itemsTotal + parsedTip)}</Text></View>
+                    <View style={styles.totalsRow}><Text style={styles.totalsLabel}>Grand total</Text><Text style={styles.totalsValue}>{money(itemsTotal + parsedTip + parsedTax)}</Text></View>
                 </View>
             </ScrollView>
 
             <View style={styles.bottomBar}>
-                <AppButton title="Looks good" icon="checkmark-circle-outline" onPress={() => onContinue(items, tip)} style={styles.primaryButton} />
+                <AppButton title="Looks good" icon="checkmark-circle-outline" onPress={() => onContinue(buildReceiptItems(), tip, tax)} style={styles.primaryButton} />
                 <AppButton title="Cancel" variant="soft" onPress={onCancel} style={styles.cancelButton} />
             </View>
         </KeyboardAvoidingView>
@@ -141,6 +179,7 @@ const styles = StyleSheet.create({
     quantityInput: { width: 64, backgroundColor: '#FFFFFF', borderRadius: 12, paddingHorizontal: 10, height: 48, borderWidth: 1, borderColor: theme.color.line, textAlign: 'center', color: theme.color.text, fontWeight: '900' },
     quantityLabel: { marginTop: 4, color: theme.color.muted, fontSize: 11, fontWeight: '700' },
     priceInput: { width: 110, backgroundColor: '#FFFFFF', borderRadius: 12, paddingHorizontal: 12, height: 48, borderWidth: 1, borderColor: theme.color.line, textAlign: 'right', color: theme.color.text, fontWeight: '900' },
+    taxInput: { width: 110, backgroundColor: '#FFFFFF', borderRadius: 12, paddingHorizontal: 12, height: 48, borderWidth: 1, borderColor: theme.color.line, textAlign: 'right', color: theme.color.text, fontWeight: '900' },
     deleteButton: { padding: 8 },
     addRowWrap: { alignItems: 'center', marginTop: 6 },
     addButton: { backgroundColor: theme.color.blue, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8 },

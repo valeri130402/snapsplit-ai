@@ -24,6 +24,7 @@ export default function App() {
   const [people, setPeople] = useState<Person[]>(initialPeople);
   const [items, setItems] = useState<ReceiptItem[]>([]);
   const [tip, setTip] = useState('0.00');
+  const [tax, setTax] = useState('0.00');
   const [splitMode, setSplitMode] = useState<SplitMode>('manual');
   const [selectedItemId, setSelectedItemId] = useState('');
   const [receiptWarning, setReceiptWarning] = useState<string | undefined>(undefined);
@@ -33,8 +34,9 @@ export default function App() {
   const [selectedHistoryBill, setSelectedHistoryBill] = useState<BillHistoryEntry | null>(null);
 
   const parsedTip = Number.parseFloat(tip.replace(',', '.')) || 0;
-  const results = useMemo(() => calculateSplit(people, items, parsedTip), [people, items, parsedTip]);
-  const grandTotal = getGrandTotal(items, parsedTip);
+  const parsedTax = Number.parseFloat(tax.replace(',', '.')) || 0;
+  const results = useMemo(() => calculateSplit(people, items, parsedTip, parsedTax, splitMode), [people, items, parsedTip, parsedTax, splitMode]);
+  const grandTotal = getGrandTotal(items, parsedTip, parsedTax);
   const itemsTotal = getItemsTotal(items);
 
   function getAssignedPortions(item: ReceiptItem) {
@@ -74,6 +76,7 @@ export default function App() {
     setItems(freshItems);
     setSelectedItemId(freshItems[0]?.id ?? '');
     setTip('0.00');
+    setTax('0.00');
     setSplitMode('manual');
     setReceiptWarning(undefined);
     setReceiptRawText(undefined);
@@ -86,6 +89,7 @@ export default function App() {
     setItems([]);
     setSelectedItemId('');
     setTip('0.00');
+    setTax('0.00');
     setSplitMode('manual');
     setReceiptWarning(undefined);
     setReceiptRawText(undefined);
@@ -133,6 +137,7 @@ export default function App() {
     setReceiptWarning(parsed.warning);
     setReceiptRawText(parsed.rawText);
     setReceiptImageUri(asset.uri);
+    setTax(parsed.tax != null ? parsed.tax.toFixed(2) : '0.00');
   }
 
   function updatePeopleCount(count: number) {
@@ -246,7 +251,7 @@ export default function App() {
         }, {} as Record<string, number>);
         return { ...item, assignedPortions: portions, assignedTo: allPeople };
       });
-      const equalResults = calculateSplit(people, equalItems, parsedTip);
+      const equalResults = calculateSplit(people, equalItems, parsedTip, parsedTax, splitMode);
       setItems(equalItems);
       saveBillToHistory(equalItems, equalResults);
       setScreen('summary');
@@ -271,7 +276,7 @@ export default function App() {
   }
 
   function saveBillToHistory(nextItems: ReceiptItem[], nextResults: ReturnType<typeof calculateSplit>) {
-    const nextGrandTotal = getGrandTotal(nextItems, parsedTip);
+    const nextGrandTotal = getGrandTotal(nextItems, parsedTip, parsedTax);
     setHistory((current) => {
       const currentId = `current-${merchant}-${nextItems.length}-${nextGrandTotal.toFixed(2)}`;
       const alreadySaved = current.some((entry) => entry.id === currentId);
@@ -283,6 +288,7 @@ export default function App() {
           date: 'Today',
           amount: nextGrandTotal,
           tip: parsedTip,
+          tax: parsedTax,
           people: people.map((person) => person.name).filter(Boolean),
           receiptItems: nextItems,
           receiptImageUri,
@@ -380,6 +386,7 @@ export default function App() {
           people={people}
           items={items}
           tip={tip}
+          tax={tax}
           splitMode={splitMode}
           onSplitModeChange={setSplitMode}
           onTipChange={setTip}
@@ -400,13 +407,17 @@ export default function App() {
           merchant={merchant}
           items={items}
           tip={tip}
+          tax={tax}
           warning={receiptWarning}
           rawText={receiptRawText}
           onMerchantChange={setMerchant}
+          onTipChange={setTip}
+          onTaxChange={setTax}
           onCancel={() => setScreen('importReceipt')}
-          onContinue={(nextItems, nextTip) => {
+          onContinue={(nextItems, nextTip, nextTax) => {
             setItems(nextItems);
             setTip(nextTip);
+            setTax(nextTax);
             setReceiptWarning(undefined);
             setReceiptRawText(undefined);
             setScreen('splitSetup');
@@ -424,6 +435,7 @@ export default function App() {
           selectedItemId={selectedItemId}
           results={results}
           tip={tip}
+          tax={tax}
           onSelectedItemChange={setSelectedItemId}
           onTogglePerson={togglePersonForSelectedItem}
           onAssignEveryone={assignSelectedItemToEveryone}
